@@ -11,6 +11,7 @@
 <meta name="theme-color" content="#1d2330">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
+<script>/* Home Screen copies can be stale: reload once if a newer build is online */(function(){try{var cur='kaiju-surge-v5.9';if(sessionStorage.getItem('kjFresh')===cur)return;fetch(location.pathname+'?fresh='+Date.now(),{cache:'no-store'}).then(function(r){return r.text()}).then(function(t){var m=t.match(/kaiju-surge-v[0-9.]+/);sessionStorage.setItem('kjFresh',cur);if(m&&m[0]!==cur){location.replace(location.pathname+'?v='+encodeURIComponent(m[0])+location.search.replace(/^\?/,'&'));}}).catch(function(){});}catch(e){}})();</script>
 <title>Kaiju Surge Prototype — The Town</title>
 <style>
   html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#1d2330;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;touch-action:none;-webkit-text-size-adjust:100%;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -159,7 +160,7 @@ const SFX={stomp:()=>tone(90,0.35,'sine',0.35,-50), whoosh:()=>tone(500,0.3,'saw
 // ---------------- session log ----------------
 const LOG={attempts:0,events:[]}; let t0=performance.now();
 function ev(name,extra){ const e={t:+((performance.now()-t0)/1000).toFixed(1),e:name}; if(G&&G.errand) e.errand=G.errand.id; if(extra) Object.assign(e,extra); LOG.events.push(e); }
-function showLog(){ $('logText').value=JSON.stringify({prototype:'kaiju-surge-v5.8',ua:navigator.userAgent.slice(0,80),screen:W+'x'+H,settings:S,grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,best:G?G.best:null,...LOG},null,1); $('copyMsg').textContent=''; openPanel('logPanel'); }
+function showLog(){ $('logText').value=JSON.stringify({prototype:'kaiju-surge-v5.9',ua:navigator.userAgent.slice(0,80),screen:W+'x'+H,settings:S,grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,best:G?G.best:null,...LOG},null,1); $('copyMsg').textContent=''; openPanel('logPanel'); }
 $('info').onclick=showLog; $('closeLog').onclick=()=>closePanel('logPanel');
 $('copyLog').onclick=()=>{ const ta=$('logText'); try{ navigator.clipboard.writeText(ta.value).then(()=>$('copyMsg').textContent='Copied.',()=>{ta.select();$('copyMsg').textContent='Select all and copy manually.';}); }catch(e){ ta.select(); $('copyMsg').textContent='Select all and copy manually.'; } };
 
@@ -721,7 +722,9 @@ function draw(){
     else { let a=aimAssist(g.focus.aimA); if(g.focus.over) a+=Math.sin(ft*20)*0.25;
       const hit=aimProbe(a); if(hit){ ctx.strokeStyle=hit.good?'#7CFFB2':'#ff6b6b'; ctx.lineWidth=5*SCALE; ctx.setLineDash([]);
         if(hit.b){ const [ba,bb]=toS(hit.b.x,hit.b.y); rr(ba-4,bb-4,hit.b.w*SCALE+8,hit.b.h*SCALE+8,10*SCALE); ctx.stroke(); }
-        else { const [pa,pb]=toS(hit.x!==undefined?hit.x:hit.p.x, hit.y!==undefined?hit.y:hit.p.y); ctx.beginPath(); ctx.arc(pa,pb,(hit.p&&hit.p.kind==='bus'?80:48)*SCALE,0,6.283); ctx.stroke(); } } const len=(m.lock?200:520)*SCALE, tx=mx+Math.cos(a)*len, ty=my+Math.sin(a)*len;
+        else { const [pa,pb]=toS(hit.x!==undefined?hit.x:hit.p.x, hit.y!==undefined?hit.y:hit.p.y); ctx.beginPath(); ctx.arc(pa,pb,(hit.p&&hit.p.kind==='bus'?80:48)*SCALE,0,6.283); ctx.stroke(); } } let len=(m.lock?200:520)*SCALE; { /* keep the target ring on screen (short phone screens cut it off when aiming up or down) */ const mg=26*SCALE*1.7+6, x0=mg, x1=W-mg, y0=Math.max(mg,(H<420?52:62)+26*SCALE), y1=H-mg, dx=Math.cos(a), dy=Math.sin(a);
+        if(dx>1e-4) len=Math.min(len,(x1-mx)/dx); if(dx<-1e-4) len=Math.min(len,(x0-mx)/dx); if(dy>1e-4) len=Math.min(len,(y1-my)/dy); if(dy<-1e-4) len=Math.min(len,(y0-my)/dy); len=Math.max(len,60*SCALE); }
+      const tx=mx+Math.cos(a)*len, ty=my+Math.sin(a)*len; G.aimEnd=[tx,ty];
       ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=4*SCALE; ctx.setLineDash([14*SCALE,10*SCALE]); ctx.beginPath(); ctx.moveTo(mx,my); ctx.lineTo(tx,ty); ctx.stroke(); ctx.setLineDash([]);
       const ring=focusRing(ft), inner=26*SCALE, ok=isPerfectRing(ring,ft); ctx.strokeStyle='#fff'; ctx.lineWidth=3*SCALE; ctx.beginPath(); ctx.arc(tx,ty,inner,0,6.283); ctx.stroke();
       ctx.strokeStyle=ok?'#7CFFB2':'#ffd166'; ctx.lineWidth=(ok?7:4)*SCALE; ctx.beginPath(); ctx.arc(tx,ty,inner*(1+ring*2.4),0,6.283); ctx.stroke();
@@ -886,7 +889,7 @@ $('fbBtn').onclick=()=>openFb(G&&G.errand?'During: '+ERRANDS[G.errand.id].name:'
 $('fbFromEnd').onclick=()=>openFb('After: '+$('endTitle').textContent);
 $('fbClose').onclick=()=>closePanel('fbPanel');
 $('fbSend').onclick=async()=>{
-  const payload={v:'kaiju-surge-v5.8',host:HOST,tester:TESTER,at:new Date().toISOString(),context:fbContext,again:fbAgain,best:$('fbBest').value.slice(0,1000),confused:$('fbConf').value.slice(0,1000),other:$('fbElse').value.slice(0,1000),
+  const payload={v:'kaiju-surge-v5.9',host:HOST,tester:TESTER,at:new Date().toISOString(),context:fbContext,again:fbAgain,best:$('fbBest').value.slice(0,1000),confused:$('fbConf').value.slice(0,1000),other:$('fbElse').value.slice(0,1000),
     screen:W+'x'+H,touch:('ontouchstart' in window),best_stars:G?G.best:null,grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,settings:S,events:LOG.events.slice(-80)};
   if(!payload.again&&!payload.best&&!payload.confused&&!payload.other){ $('fbMsg').textContent='Pick an answer or type something first.'; return; }
   $('fbSend').disabled=true; $('fbMsg').textContent='Sending…';
@@ -898,13 +901,13 @@ $('fbSend').onclick=async()=>{
 };
 const SID=Date.now().toString(36)+Math.random().toString(36).slice(2,6); let fpsSum=0,fpsN=0;
 function sessionSummary(){ const ev2=LOG.events, cnt=n=>ev2.filter(e=>e.e===n).length;
-  return {v:'kaiju-surge-v5.8',host:HOST,tester:TESTER,started:new Date(performance.timeOrigin||Date.now()).toISOString(),screen:W+'x'+H,touch:('ontouchstart' in window),settings:S,lowQuality:lowQ,fps:fpsN?Math.round(fpsSum/fpsN):null,
+  return {v:'kaiju-surge-v5.9',host:HOST,tester:TESTER,started:new Date(performance.timeOrigin||Date.now()).toISOString(),screen:W+'x'+H,touch:('ontouchstart' in window),settings:S,lowQuality:lowQ,fps:fpsN?Math.round(fpsSum/fpsN):null,
     errands:ev2.filter(e=>e.e==='errand_complete').map(e=>({id:e.errand,stars:e.stars,time:e.time,houses:e.houses,glass:e.glass,tiers:e.tiers,mistakes:e.mistakes,perfects:e.perfects})),
     counts:{blasts:cnt('blast'),redirects:cnt('redirect'),perfects:ev2.filter(e=>e.e==='redirect'&&e.perfect).length,breathes:cnt('breathe'),rampages:cnt('rampage'),tantrums:cnt('tantrum'),overthinks:cnt('overthink'),agains:cnt('again'),feedback:cnt('feedback_sent'),help:cnt('help_open')}, firstRedirectS:(()=>{ const st=ev2.find(e=>e.e==='errand_start'), r=ev2.find(e=>e.e==='redirect'); return st&&r?+(r.t-st.t).toFixed(1):null; })(), replays:ev2.filter(e=>e.e==='errand_start'&&e.replay).length, errandsStarted:ev2.filter(e=>e.e==='errand_start').length, releaseErrMs:ev2.filter(e=>e.e==='redirect'&&typeof e.err==='number').slice(-60).map(e=>[e.err,e.cyc,e.band==='hot'?2:(e.band==='zone'?1:0)]),
     coach:ev2.filter(e=>e.e==='coach_done').map(e=>({id:e.id,secs:e.secs})),grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,minutes:+((performance.now()-t0)/60000).toFixed(1),last:ev2.length?ev2[ev2.length-1].e:null}; }
 let saving=false; async function saveSession(){ if(!DB||saving||!LOG.events.length) return; saving=true; try{ await DB.doc('sessions/'+SID).set(sessionSummary()); }catch(e){} saving=false; }
 document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') saveSession(); });
-window.__kaiju={voices:()=>VBUF?Object.fromEntries(Object.entries(VBUF).map(([k,v])=>[k,v.map(b=>+b.duration.toFixed(2))])):null,perfect:(r,ft)=>isPerfectRing(r,ft),hit:(b,p)=>damageBuilding(b,p,"test"),crane:p=>craneHit(G.errand.lit,p),geom:()=>layoutGeom(),summary:()=>sessionSummary(),state:()=>G,go:id=>{placeAt(id);startErrand(id);}};
+window.__kaiju={aimEnd:()=>G&&G.aimEnd,voices:()=>VBUF?Object.fromEntries(Object.entries(VBUF).map(([k,v])=>[k,v.map(b=>+b.duration.toFixed(2))])):null,perfect:(r,ft)=>isPerfectRing(r,ft),hit:(b,p)=>damageBuilding(b,p,"test"),crane:p=>craneHit(G.errand.lit,p),geom:()=>layoutGeom(),summary:()=>sessionSummary(),state:()=>G,go:id=>{placeAt(id);startErrand(id);}};
 newSession(); requestAnimationFrame(loop);
 })();
 </script>
