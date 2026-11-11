@@ -26,10 +26,12 @@
   button{font:inherit;border:0;border-radius:12px;padding:11px 14px;font-size:15px;font-weight:600;cursor:pointer}
   .primary{background:#ff6b3d;color:#fff;flex:1}
   .ghost{background:#e9e5da;color:#1d2330}
-  .topbtn{position:fixed;top:10px;z-index:5;background:rgba(255,255,255,.96);color:#1d2330;border-radius:10px;padding:6px 10px;font-size:13px}
+  .topbtn{position:fixed;top:max(8px,env(safe-area-inset-top));z-index:5;background:rgba(255,255,255,.96);color:#1d2330;border-radius:10px;padding:8px 12px;font-size:14px;min-height:40px;line-height:1.2;white-space:nowrap;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .topbtn::after{content:'';position:absolute;inset:-5px -3px}
+  .topbtn:active{transform:scale(.94);filter:brightness(.9)}
   #gear{right:10px} #info{right:92px} #errs{right:156px} #helpBtn{right:342px;font-weight:700}
-  @media (max-width:600px){ .topbtn{font-size:12px;padding:5px 8px} #info{display:none} }
-  @media (max-height:420px){ .topbtn{font-size:12px;padding:4px 8px;top:6px;border-radius:8px} #info{display:none} } #fbBtn{right:246px;background:#ff6b3d;color:#fff}
+  @media (max-width:600px){ .topbtn{font-size:13px;padding:8px 10px} #info{display:none} }
+  @media (max-height:420px){ .topbtn{font-size:13px;padding:8px 10px} #info{display:none} } #fbBtn{right:246px;background:#ff6b3d;color:#fff}
   .fbta{height:60px!important;user-select:text;-webkit-user-select:text;touch-action:auto;font-family:inherit!important;font-size:16px!important}
   .pick.on{background:#ffd3c2}
   label{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;margin:8px 0}
@@ -669,15 +671,15 @@ function drawHUD(){ const g=G,m=g.m,E=g.errand;
     else if(E.id==='cake') line=`Cake Run · tiers: ${'🎂'.repeat(E.tiers)}${'·'.repeat(3-E.tiers)} · glass broken: ${E.glass} · ${E.t.toFixed(0)}s`;
     else line=`Harbour Crane · loaded ${E.loaded}/${E.orders.length} · splashes ${E.mistakes} · ${E.t.toFixed(0)}s`; }
   else line=g.nextErrand?`Walk to the glowing marker: ${ERRANDS[g.nextErrand].name}`:'Wandering. Tap Errands for a job.';
-  ctx.font=H<420?'600 12px system-ui':'600 14px system-ui'; const tw=ctx.measureText(line).width; ctx.fillStyle='rgba(20,24,34,.72)'; const res=topReserve(), row2=W-res<220, sh=H<420, hy=row2?(sh?40:50):(sh?6:10), hw=row2?W-200:W-res-10, hh=sh?28:38; rr(10,hy,Math.min(tw+24,hw),hh,10); ctx.fill(); ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.fillText(line,22,hy+(sh?19:24),hw-24);
+  ctx.font=H<420?'600 12px system-ui':'600 14px system-ui'; const tw=ctx.measureText(line).width; ctx.fillStyle='rgba(20,24,34,.72)'; const res=topReserve(), row2=W-res<220, sh=H<420, hy=row2?56:(sh?8:10), hw=row2?W-200:W-res-10, hh=sh?32:38; rr(10,hy,Math.min(tw+24,hw),hh,10); ctx.fill(); ctx.fillStyle='#fff'; ctx.textAlign='left'; ctx.fillText(line,22,hy+(sh?21:24),hw-24);
   // arrow to next marker when it's off screen
   if(!E&&g.nextErrand){ const k=ERRANDS[g.nextErrand].marker,[a,b]=toS(k.x,k.y); if(a<0||a>W||b<0||b>H){ const ang=Math.atan2(b-H/2,a-W/2), ax=W/2+Math.cos(ang)*Math.min(W,H)*0.38, ay=H/2+Math.sin(ang)*Math.min(W,H)*0.38;
     ctx.save(); ctx.translate(ax,ay); ctx.rotate(ang); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.beginPath(); ctx.moveTo(22,0); ctx.lineTo(-12,-14); ctx.lineTo(-12,14); ctx.closePath(); ctx.fill(); ctx.restore(); } }
   if(g.coach){ const t=g.coach.text, sh=H<420, LH=sh?16:20; ctx.font=sh?'700 12px system-ui':'700 14px system-ui'; const words=t.split(' '), maxW=Math.min(W*(sh?0.5:0.46),440), lines=[]; let l='';
     for(const w of words){ const tt=l?l+' '+w:w; if(ctx.measureText(tt).width>maxW){ lines.push(l); l=w; } else l=tt; } lines.push(l);
-    const cy=m.lock&&!g.card?(W-topReserve()<220?150:(sh?44:64))+(sh?16:22):H-lines.length*LH-(sh?14:30); ctx.fillStyle='rgba(255,214,102,.95)'; rr(W/2-maxW/2-10,cy-(sh?15:22),maxW+20,lines.length*LH+(sh?10:16),10); ctx.fill(); ctx.fillStyle='#1d2330'; ctx.textAlign='center'; lines.forEach((tt,i)=>ctx.fillText(tt,W/2,cy+i*LH));
+    const cy=m.lock&&!g.card?(W-topReserve()<220?160:(sh?50:64))+(sh?16:22):H-lines.length*LH-(sh?14:30); ctx.fillStyle='rgba(255,214,102,.95)'; rr(W/2-maxW/2-10,cy-(sh?15:22),maxW+20,lines.length*LH+(sh?10:16),10); ctx.fill(); ctx.fillStyle='#1d2330'; ctx.textAlign='center'; lines.forEach((tt,i)=>ctx.fillText(tt,W/2,cy+i*LH));
     const tg=g.coach.target&&g.coach.target(); if(tg){ const [a,b]=toS(tg.x,tg.y), bob=Math.sin(g.t*6)*8; ctx.fillStyle='#ffd166'; ctx.strokeStyle='#1d2330'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(a,b+bob); ctx.lineTo(a-16,b-26+bob); ctx.lineTo(a+16,b-26+bob); ctx.closePath(); ctx.fill(); ctx.stroke(); } }
-  else if(g.hintT>0&&g.hint){ ctx.globalAlpha=Math.min(1,g.hintT); const sh=H<420, LH=sh?16:20, top=sh?40:56; ctx.font=sh?'600 12px system-ui':'600 15px system-ui'; const words=g.hint.split(' '), maxW=Math.min(W*0.6,520), lines=[]; let l='';
+  else if(g.hintT>0&&g.hint){ ctx.globalAlpha=Math.min(1,g.hintT); const sh=H<420, LH=sh?16:20, top=W-topReserve()<220?138:(sh?50:58); ctx.font=sh?'600 12px system-ui':'600 15px system-ui'; const words=g.hint.split(' '), maxW=Math.min(W*0.6,520), lines=[]; let l='';
     for(const w of words){ const t=l?l+' '+w:w; if(ctx.measureText(t).width>maxW){ lines.push(l); l=w; } else l=t; } lines.push(l);
     ctx.fillStyle='rgba(255,253,247,.94)'; rr(W/2-maxW/2-10,top,maxW+20,lines.length*LH+(sh?10:16),10); ctx.fill(); ctx.fillStyle='#1d2330'; ctx.textAlign='center'; lines.forEach((t,i)=>ctx.fillText(t,W/2,top+(sh?17:22)+i*LH)); ctx.globalAlpha=1; }
   drawCardMap();
@@ -691,7 +693,7 @@ function drawHUD(){ const g=G,m=g.m,E=g.errand;
   else if(G.errand&&!m.lock){ const p=padGeom(), hot=m.meter>=75, pl=hot?0.5+0.5*Math.sin(performance.now()/180):0; ctx.globalAlpha=hot?0.75+0.25*pl:0.45; ctx.fillStyle=hot?'#ffd6ec':'rgba(255,255,255,.8)'; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*(1+0.12*pl),0,6.283); ctx.fill(); ctx.font=`${Math.round(p.r*0.9)}px system-ui`; ctx.fillStyle='#1d2330'; ctx.textAlign='center'; ctx.fillText('🌬',p.x,p.y+p.r*0.32); ctx.globalAlpha=1;
     if(hot&&!(G.grooves.breathe>0)){ ctx.font='700 12px system-ui'; ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(29,35,48,.8)'; ctx.lineWidth=3; const ty=p.y-p.r-8; ctx.strokeText('hold ⚡, slide here to calm',p.x,ty); ctx.fillText('hold ⚡, slide here to calm',p.x,ty); } }
   const bd=band(m.meter); ctx.font='600 12px system-ui'; ctx.fillStyle='rgba(255,255,255,.85)'; ctx.fillText(bd==='low'?'calm · precise':(bd==='zone'?'in the zone':'HOT · powerful'),b.x,b.y-b.r-10);
-  if(H>W){ ctx.fillStyle='rgba(255,253,247,.92)'; rr(W/2-110,96,220,30,10); ctx.fill(); ctx.fillStyle='#1d2330'; ctx.font='600 13px system-ui'; ctx.textAlign='center'; ctx.fillText('Best played sideways ↻',W/2,116); }
+  if(H>W){ ctx.fillStyle='rgba(255,253,247,.92)'; rr(W/2-110,100,220,30,10); ctx.fill(); ctx.fillStyle='#1d2330'; ctx.font='600 13px system-ui'; ctx.textAlign='center'; ctx.fillText('Best played sideways ↻',W/2,120); }
 }
 
 let last=performance.now();
@@ -710,10 +712,10 @@ try{ if(window.claude&&window.claude.use) window.claude.use('db').then(d=>{DB=d;
 document.querySelectorAll('#fbAgain .pick').forEach(b=>b.onclick=()=>{ fbAgain=b.dataset.v; document.querySelectorAll('#fbAgain .pick').forEach(x=>x.classList.toggle('on',x===b)); });
 function openFb(ctxText){ fbContext=ctxText; $('fbCtx').textContent=ctxText; $('fbMsg').textContent=''; openPanel('fbPanel'); }
 (()=>{ const de=document.documentElement, can=!!(document.fullscreenEnabled||document.webkitFullscreenEnabled), isFs=()=>!!(document.fullscreenElement||document.webkitFullscreenElement);
-  const label=()=>{ $('fsBtn').textContent=isFs()?'⤡ Exit full screen':'⛶ Full screen'; };
+  const label=()=>{ const n=innerWidth<600; $('fsBtn').textContent=isFs()?(n?'⤡':'⤡ Exit full screen'):(n?'⛶':'⛶ Full screen'); $('fsBtn').setAttribute('aria-label',isFs()?'Exit full screen':'Full screen'); };
   if(can){ $('fsBtn').style.display='block'; }
   $('fsBtn').onclick=async()=>{ try{ if(isFs()){ await (document.exitFullscreen||document.webkitExitFullscreen).call(document); } else { await (de.requestFullscreen||de.webkitRequestFullscreen).call(de); try{ await screen.orientation.lock('landscape'); }catch(e){} } ev('fullscreen',{on:!isFs()}); }catch(e){ ev('fullscreen_refused'); setHint('Full screen isn\'t allowed in this browser.','fsno'); } };
-  ['fullscreenchange','webkitfullscreenchange'].forEach(n=>document.addEventListener(n,()=>{ label(); resize(); }));
+  ['fullscreenchange','webkitfullscreenchange'].forEach(n=>document.addEventListener(n,()=>{ label(); resize(); })); addEventListener('resize',()=>{ label(); setTimeout(measureTop,0); });
   label(); setTimeout(measureTop,0);
 })();
 $('helpBtn').onclick=()=>{ const E=G&&G.errand; $('helpGoal').innerHTML=E?('<b>Now: '+ERRANDS[E.id].name+'.</b> '+(HELPGOAL[E.id]||'')):'<b>No errand running.</b> Tap Errands to pick one.'; const tip=(G&&G.coach&&G.coach.text)||(G&&G.hint)||''; $('helpTip').textContent=tip?('Last tip: '+tip):''; ev('help_open'); openPanel('helpPanel'); };
