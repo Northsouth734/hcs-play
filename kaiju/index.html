@@ -92,7 +92,8 @@
   <label>Joystick <select id="setStick"><option value="float">Appears where you touch</option><option value="fixed">Fixed in the corner</option></select></label>
   <label>Button size <select id="setBtn"><option value="1">Normal</option><option value="1.3">Large</option></select></label>
   <label>Hands <select id="setHand"><option value="right">Button on the right</option><option value="left">Button on the left</option></select></label>
-  <div class="btns"><button class="primary" id="closeSet">Done</button></div>
+  <div class="btns"><button class="ghost" id="testSound">🔊 Test sound</button><button class="primary" id="closeSet">Done</button></div>
+  <p class="small" id="soundMsg"></p>
 </div></div>
 
 <div class="panel" id="fbPanel"><div class="card">
@@ -386,7 +387,7 @@ function placeAt(id){ const k=ERRANDS[id].marker; G.m.x=k.x; G.m.y=k.y; G.m.vx=G
 $('errs').onclick=()=>{ $('errList').innerHTML=ORDER.map(id=>`<div class="erow"><div><b>${ERRANDS[id].name}</b><span>${ERRANDS[id].blurb}<br>Best: ${'⭐'.repeat(G.best[id])}${'☆'.repeat(4-G.best[id])} · ${DISTRICTS[ERRANDS[id].district].name}</span></div><button class="${G.errand&&G.errand.id===id?'primary':'ghost'}" data-e="${id}">${G.errand&&G.errand.id===id?'Restart':'Go'}</button></div>`).join('');
   [...document.querySelectorAll('[data-e]')].forEach(b=>b.onclick=()=>{ const id=b.dataset.e; if(G.errand) ev('errand_left',{from:G.errand.id,to:id}); G.errand=null; G.coach=null; G.focus=null; btn.down=false; btn.id=null; G.m.meter=Math.min(G.m.meter,60); closePanel('errPanel'); closePanel('end'); resetDistrict(ERRANDS[id].district); placeAt(id); startErrand(id); paused=anyPanel(); }); openPanel('errPanel'); };
 $('closeErr').onclick=()=>closePanel('errPanel');
-$('startBtn').onclick=()=>{ TESTER=($('testerCode').value||'').trim().slice(0,12)||TESTER; try{ localStorage.setItem('kaijuTester',TESTER); }catch(e){} closePanel('intro'); try{ if(!AC&&S.sound) AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} newSession(); paused=false; loadVoices(); startErrand('demo'); };
+$('startBtn').onclick=()=>{ TESTER=($('testerCode').value||'').trim().slice(0,12)||TESTER; try{ localStorage.setItem('kaijuTester',TESTER); }catch(e){} closePanel('intro'); if(S.sound) ensureAudio(); newSession(); paused=false; loadVoices(); startErrand('demo'); };
 
 // ---------------- first-time coaching for Demolition Day ----------------
 function demoCoach(){ const E=G.errand; if(!E||E.id!=='demo'||G.coach) return; const bus=G.D[0].P.find(p=>p.kind==='bus');
@@ -621,6 +622,17 @@ function loadVoices(){ if(VBUF||VBUSY||!AC) return; VBUSY=true; const out={}; co
   Promise.all(jobs).then(()=>{ for(const m in out) out[m]=out[m].filter(Boolean); VBUF=out; VBUSY=false; }); }
 function playClip(mood){ const list=VBUF&&VBUF[mood]; if(!list||!list.length) return 0; let i=Math.floor(Math.random()*list.length); if(list.length>1&&i===VLAST[mood]) i=(i+1)%list.length; VLAST[mood]=i;
   try{ if(VSRC){ try{ VSRC.stop(); }catch(e){} } const src=AC.createBufferSource(), g=AC.createGain(); src.buffer=list[i]; src.playbackRate.value=0.94+Math.random()*0.12; g.gain.value=0.9; src.connect(g); g.connect(AC.destination); src.start(); VSRC=src; return list[i].duration/src.playbackRate.value; }catch(e){ return 0; } }
+
+// ---------------- audio wake-up (iPhone): play through silent mode, unlock on a tap, resume after backgrounding ----------------
+function ensureAudio(){ try{ if(navigator.audioSession&&navigator.audioSession.type!=='playback') navigator.audioSession.type='playback'; }catch(e){}
+  try{ if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return; }
+  try{ if(AC.state!=='running') AC.resume().catch(()=>{}); }catch(e){}
+  if(!ensureAudio.unlocked){ ensureAudio.unlocked=true; try{ const b=AC.createBuffer(1,1,22050), src=AC.createBufferSource(); src.buffer=b; src.connect(AC.destination); src.start(0); }catch(e){} }
+  if(!VBUF) loadVoices(); }
+$('testSound').onclick=()=>{ S.sound=1; S.voice=1; try{ $('setSound').value='1'; $('setVoice').value='1'; }catch(e){} ensureAudio(); const go=()=>{ const d=playClip('happy'); if(!d) VOICES.happy.play(AC.currentTime+0.02); $('soundMsg').textContent='Playing… (audio '+AC.state+'). No sound? Turn the volume up; on iPhone also check the silent switch.'; };
+  if(VBUF) go(); else setTimeout(go,400); };
+['pointerdown','touchend','keydown'].forEach(n=>document.addEventListener(n,()=>{ if(S.sound) ensureAudio(); },{capture:true,passive:true}));
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&AC&&AC.state!=='running'){ try{ AC.resume().catch(()=>{}); }catch(e){} } });
 function sayMood(mood,force){ if(!G) return; const m=G.m, now=G.t; if(!force&&now-VOICE.last<1.2) return; if(G.focus&&mood!=='furious') return;
   VOICE.last=now; VOICE.mood=mood; const v=VOICES[mood];
   float(m.x+bodyR(m.meter)*0.9,m.y-bodyR(m.meter)-18,v.say,v.col);
