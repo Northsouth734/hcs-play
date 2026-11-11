@@ -86,6 +86,7 @@
   <label>Breath pad <select id="setPad"><option value="below">Below the button</option><option value="left">Left of the button</option></select></label>
   <label>Sound <select id="setSound"><option value="1">On</option><option value="0">Off</option></select></label>
   <label>Music <select id="setMusic"><option value="1">On</option><option value="0">Off</option></select></label>
+  <label>Monster voice <select id="setVoice"><option value="1">On</option><option value="0">Off</option></select></label>
   <label>Aim help <select id="setAim"><option value="1">On</option><option value="0">Off</option></select></label>
   <label>Easy mode <select id="setEasy"><option value="0">Off</option><option value="1">On</option></select></label>
   <label>Joystick <select id="setStick"><option value="float">Appears where you touch</option><option value="fixed">Fixed in the corner</option></select></label>
@@ -137,8 +138,8 @@ const $=id=>document.getElementById(id);
 const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), dist=(ax,ay,bx,by)=>Math.hypot(ax-bx,ay-by);
 
 // ---------------- settings ----------------
-const S={focusWorld:1,ringT:0.9,honk:7,sound:1,pad:'below',aim:1,easy:0,stick:'float',btnSize:1,hand:'right',music:1};
-$('setFocus').onchange=e=>S.focusWorld=+e.target.value; $('setAim').onchange=e=>S.aim=+e.target.value; $('setMusic').onchange=e=>S.music=+e.target.value; $('setEasy').onchange=e=>S.easy=+e.target.value; $('setStick').onchange=e=>S.stick=e.target.value; $('setBtn').onchange=e=>S.btnSize=+e.target.value; $('setHand').onchange=e=>S.hand=e.target.value; $('setRing').onchange=e=>S.ringT=+e.target.value;
+const S={focusWorld:1,ringT:0.9,honk:7,sound:1,pad:'below',aim:1,easy:0,stick:'float',btnSize:1,hand:'right',music:1,voice:1};
+$('setFocus').onchange=e=>S.focusWorld=+e.target.value; $('setAim').onchange=e=>S.aim=+e.target.value; $('setMusic').onchange=e=>S.music=+e.target.value; $('setVoice').onchange=e=>S.voice=+e.target.value; $('setEasy').onchange=e=>S.easy=+e.target.value; $('setStick').onchange=e=>S.stick=e.target.value; $('setBtn').onchange=e=>S.btnSize=+e.target.value; $('setHand').onchange=e=>S.hand=e.target.value; $('setRing').onchange=e=>S.ringT=+e.target.value;
 $('setHonk').onchange=e=>S.honk=+e.target.value; $('setSound').onchange=e=>S.sound=+e.target.value; $('setPad').onchange=e=>S.pad=e.target.value;
 let paused=true;
 const anyPanel=()=>[...document.querySelectorAll('.panel')].some(p=>p.classList.contains('show'));
@@ -158,7 +159,7 @@ const SFX={stomp:()=>tone(90,0.35,'sine',0.35,-50), whoosh:()=>tone(500,0.3,'saw
 // ---------------- session log ----------------
 const LOG={attempts:0,events:[]}; let t0=performance.now();
 function ev(name,extra){ const e={t:+((performance.now()-t0)/1000).toFixed(1),e:name}; if(G&&G.errand) e.errand=G.errand.id; if(extra) Object.assign(e,extra); LOG.events.push(e); }
-function showLog(){ $('logText').value=JSON.stringify({prototype:'kaiju-surge-v5.4',ua:navigator.userAgent.slice(0,80),screen:W+'x'+H,settings:S,grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,best:G?G.best:null,...LOG},null,1); $('copyMsg').textContent=''; openPanel('logPanel'); }
+function showLog(){ $('logText').value=JSON.stringify({prototype:'kaiju-surge-v5.5',ua:navigator.userAgent.slice(0,80),screen:W+'x'+H,settings:S,grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,best:G?G.best:null,...LOG},null,1); $('copyMsg').textContent=''; openPanel('logPanel'); }
 $('info').onclick=showLog; $('closeLog').onclick=()=>closePanel('logPanel');
 $('copyLog').onclick=()=>{ const ta=$('logText'); try{ navigator.clipboard.writeText(ta.value).then(()=>$('copyMsg').textContent='Copied.',()=>{ta.select();$('copyMsg').textContent='Select all and copy manually.';}); }catch(e){ ta.select(); $('copyMsg').textContent='Select all and copy manually.'; } };
 
@@ -449,7 +450,7 @@ function update(dt){
     if(c.x>WORLD.w+80) c.x=-80; if(c.x<-80) c.x=WORLD.w+80;
     // taxi jam blocks traffic in the glass quarter until cleared
     c.honkCd-=wdt; const d=dist(c.x,c.y,m.x,m.y);
-    if(d<220&&c.honkCd<=0&&m.mode!=='rampage'&&!m.lock){ c.honkCd=2.2; addMeter(S.honk); SFX.honk(); float(c.x,c.y-30,'HONK','#ffe066');  }
+    if(d<220&&c.honkCd<=0&&m.mode!=='rampage'&&!m.lock){ c.honkCd=2.2; addMeter(S.honk); SFX.honk(); float(c.x,c.y-30,'HONK','#ffe066'); { const md=moodOf(m); if(md==='cross'||md==='angry') setTimeout(()=>sayMood(moodOf(G.m)),260); }  }
     if(d<bodyR(m.meter)+20&&E&&E.carrying&&!c.hit){ if(!S.easy&&(Math.hypot(m.vx,m.vy)>200||m.meter>=75)){ loseTier('car bump'); if(E.tierCd<2.5) E.tierCd=2.5; } const ka=Math.atan2(c.y-m.y,c.x-m.x); c.hit=true; c.vx=Math.cos(ka)*320; c.vy=Math.sin(ka)*320; } }
   // bee
   g.beeTimer-=wdt; if(!g.bee&&g.beeTimer<=0&&!m.lock){ g.bee={t:3.2,a:0}; float(m.x,m.y-90,'bzzz…','#fff3a0'); }
@@ -592,6 +593,33 @@ function note(f,d,type,vol,at){ try{ const o=AC.createOscillator(), gn=AC.create
 let NB=null; function noiseHit(at,vol,d,freq){ try{ if(!NB){ NB=AC.createBuffer(1,Math.floor(AC.sampleRate*0.8),AC.sampleRate); const c=NB.getChannelData(0); for(let i=0;i<c.length;i++) c[i]=Math.random()*2-1; }
   const src=AC.createBufferSource(); src.buffer=NB; const f=AC.createBiquadFilter(); f.type=freq>2500?'highpass':'lowpass'; f.frequency.value=freq; const gn=AC.createGain(); gn.gain.setValueAtTime(vol,at); gn.gain.exponentialRampToValueAtTime(0.001,at+d); src.connect(f); f.connect(gn); gn.connect(AC.destination); src.start(at); src.stop(at+Math.min(d,0.78)); }catch(e){} }
 function rumble(vol,d,freq){ if(!S.sound||!AC) return; noiseHit(AC.currentTime,vol,d,freq); }
+// ---------------- v5.5 Rumble's voice: synthesized vocal sounds by mood (no recordings) ----------------
+// Five moods from the same energy value the rules use: happy <30, content <55, cross <75, angry <95, furious >=95 or Rampage.
+function moodOf(m){ return m.mode==='rampage'||m.meter>=95?'furious':(m.meter<30?'happy':(m.meter<55?'content':(m.meter<75?'cross':'angry'))); }
+const VOICE={next:2.5,last:-9,mood:null};
+function vox(at,f0,dur,type,F1,F2,vol,glide,trem,tremDepth){ try{
+  const o=AC.createOscillator(); o.type=type; o.frequency.setValueAtTime(f0,at); if(glide) o.frequency.exponentialRampToValueAtTime(Math.max(40,glide),at+dur);
+  const env=AC.createGain(); env.gain.setValueAtTime(0.0001,at); env.gain.exponentialRampToValueAtTime(vol,at+Math.min(0.03,dur*0.25)); env.gain.setValueAtTime(vol,at+dur*0.6); env.gain.exponentialRampToValueAtTime(0.0001,at+dur);
+  const mix=AC.createGain(); mix.gain.value=1;
+  for(const [F,q,g] of [[F1,5,1],[F2,7,0.55]]){ const bp=AC.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=F; bp.Q.value=q; const gg=AC.createGain(); gg.gain.value=g*3; o.connect(bp); bp.connect(gg); gg.connect(mix); }
+  if(trem){ const lfo=AC.createOscillator(), lg=AC.createGain(); lfo.frequency.value=trem; lg.gain.value=tremDepth||0.6; const am=AC.createGain(); am.gain.value=1; lfo.connect(lg); lg.connect(am.gain); mix.connect(am); am.connect(env); lfo.start(at); lfo.stop(at+dur+0.05); }
+  else mix.connect(env);
+  env.connect(AC.destination); o.start(at); o.stop(at+dur+0.05); }catch(e){} }
+const VOICES={
+  happy:  {say:'♪ do-do-do', col:'#bff3ec', play(t){ [392,440,523].forEach((f,i)=>vox(t+i*0.15,f,0.13,'triangle',600,1000,0.22,f*1.04)); }},
+  content:{say:'hm-hmm?',    col:'#fff3c4', play(t){ vox(t,240,0.16,'triangle',450,900,0.42,232); vox(t+0.2,250,0.26,'triangle',450,900,0.42,310); }},
+  cross:  {say:'hmph!',      col:'#ffd8a8', play(t){ vox(t,190,0.3,'sawtooth',500,1100,0.34,115); noiseHit(t,0.09,0.22,1800); }},
+  angry:  {say:'grrrr…',     col:'#ffb3a7', play(t){ vox(t,95,0.75,'sawtooth',420,800,0.24,85,26,0.85); noiseHit(t,0.03,0.6,900); }},
+  furious:{say:'RAAAAR!',    col:'#ff8a65', play(t){ vox(t,120,0.9,'sawtooth',650,1200,0.32,190,30,0.7); vox(t,60,0.9,'square',300,700,0.16,90,18,0.5); noiseHit(t,0.12,0.8,1400); }},
+};
+function sayMood(mood,force){ if(!G) return; const m=G.m, now=G.t; if(!force&&now-VOICE.last<1.2) return; if(G.focus&&mood!=='furious') return;
+  VOICE.last=now; VOICE.mood=mood; const v=VOICES[mood];
+  float(m.x+bodyR(m.meter)*0.9,m.y-bodyR(m.meter)-18,v.say,v.col);
+  if(S.sound&&S.voice&&AC&&AC.state==='running'&&!paused) v.play(AC.currentTime+0.02); }
+function updateVoice(dt){ if(!G||paused) return; const m=G.m, mood=moodOf(m);
+  if(VOICE.mood===null) VOICE.mood=mood;
+  if(mood!==VOICE.mood){ sayMood(mood,true); VOICE.next=mood==='angry'||mood==='furious'?2:4; return; }
+  VOICE.next-=dt; if(VOICE.next<=0){ sayMood(mood); VOICE.next={happy:6,content:6,cross:4.5,angry:3,furious:2.2}[mood]*(0.75+Math.random()*0.5); } }
 function music(){ if(!S.sound||!S.music||!AC||paused||!G||AC.state!=='running') return; const bd=band(G.m.meter), bpm=bd==='low'?84:(bd==='zone'?104:128), sp=60/bpm/2, now=AC.currentTime; if(MUS.next<now) MUS.next=now+0.05;
   const scale=[0,2,4,7,9,12], pat=[0,-1,2,-1,4,-1,2,3,0,-1,5,-1,4,-1,2,-1], root=bd==='hot'?110:(bd==='zone'?131:147);
   while(MUS.next<now+0.2){ const st=MUS.step++%16;
@@ -812,7 +840,7 @@ function drawHUD(){ const g=G,m=g.m,E=g.errand;
 let last=performance.now();
 let slowT=0; function loop(now){ const raw=(now-last)/1000, dt=Math.min(0.05,raw); last=now;
   if(G&&!paused){ if(raw>0&&raw<0.5){ fpsSum+=1/raw; fpsN++; } if(raw>0.034){ slowT+=raw; if(slowT>4&&!lowQ){ lowQ=true; resize(); ev('low_quality'); } } else slowT=Math.max(0,slowT-raw*1.5);
-    updateFX(dt); if(G.hitstop>0) G.hitstop-=dt; else update(dt); } music();
+    updateFX(dt); updateVoice(dt); if(G.hitstop>0) G.hitstop-=dt; else update(dt); } music();
   draw(); requestAnimationFrame(loop); }
 // ---------------- no zooming (iOS ignores the viewport's user-scalable=no) ----------------
 ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
@@ -838,7 +866,7 @@ $('fbBtn').onclick=()=>openFb(G&&G.errand?'During: '+ERRANDS[G.errand.id].name:'
 $('fbFromEnd').onclick=()=>openFb('After: '+$('endTitle').textContent);
 $('fbClose').onclick=()=>closePanel('fbPanel');
 $('fbSend').onclick=async()=>{
-  const payload={v:'kaiju-surge-v5.4',host:HOST,tester:TESTER,at:new Date().toISOString(),context:fbContext,again:fbAgain,best:$('fbBest').value.slice(0,1000),confused:$('fbConf').value.slice(0,1000),other:$('fbElse').value.slice(0,1000),
+  const payload={v:'kaiju-surge-v5.5',host:HOST,tester:TESTER,at:new Date().toISOString(),context:fbContext,again:fbAgain,best:$('fbBest').value.slice(0,1000),confused:$('fbConf').value.slice(0,1000),other:$('fbElse').value.slice(0,1000),
     screen:W+'x'+H,touch:('ontouchstart' in window),best_stars:G?G.best:null,grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,settings:S,events:LOG.events.slice(-80)};
   if(!payload.again&&!payload.best&&!payload.confused&&!payload.other){ $('fbMsg').textContent='Pick an answer or type something first.'; return; }
   $('fbSend').disabled=true; $('fbMsg').textContent='Sending…';
@@ -850,7 +878,7 @@ $('fbSend').onclick=async()=>{
 };
 const SID=Date.now().toString(36)+Math.random().toString(36).slice(2,6); let fpsSum=0,fpsN=0;
 function sessionSummary(){ const ev2=LOG.events, cnt=n=>ev2.filter(e=>e.e===n).length;
-  return {v:'kaiju-surge-v5.4',host:HOST,tester:TESTER,started:new Date(performance.timeOrigin||Date.now()).toISOString(),screen:W+'x'+H,touch:('ontouchstart' in window),settings:S,lowQuality:lowQ,fps:fpsN?Math.round(fpsSum/fpsN):null,
+  return {v:'kaiju-surge-v5.5',host:HOST,tester:TESTER,started:new Date(performance.timeOrigin||Date.now()).toISOString(),screen:W+'x'+H,touch:('ontouchstart' in window),settings:S,lowQuality:lowQ,fps:fpsN?Math.round(fpsSum/fpsN):null,
     errands:ev2.filter(e=>e.e==='errand_complete').map(e=>({id:e.errand,stars:e.stars,time:e.time,houses:e.houses,glass:e.glass,tiers:e.tiers,mistakes:e.mistakes,perfects:e.perfects})),
     counts:{blasts:cnt('blast'),redirects:cnt('redirect'),perfects:ev2.filter(e=>e.e==='redirect'&&e.perfect).length,breathes:cnt('breathe'),rampages:cnt('rampage'),tantrums:cnt('tantrum'),overthinks:cnt('overthink'),agains:cnt('again'),feedback:cnt('feedback_sent'),help:cnt('help_open')}, firstRedirectS:(()=>{ const st=ev2.find(e=>e.e==='errand_start'), r=ev2.find(e=>e.e==='redirect'); return st&&r?+(r.t-st.t).toFixed(1):null; })(), replays:ev2.filter(e=>e.e==='errand_start'&&e.replay).length, errandsStarted:ev2.filter(e=>e.e==='errand_start').length, releaseErrMs:ev2.filter(e=>e.e==='redirect'&&typeof e.err==='number').slice(-60).map(e=>[e.err,e.cyc,e.band==='hot'?2:(e.band==='zone'?1:0)]),
     coach:ev2.filter(e=>e.e==='coach_done').map(e=>({id:e.id,secs:e.secs})),grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,minutes:+((performance.now()-t0)/60000).toFixed(1),last:ev2.length?ev2[ev2.length-1].e:null}; }
