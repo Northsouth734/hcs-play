@@ -18,6 +18,7 @@
   #fsBtn{display:none}
   .panel{touch-action:pan-y;position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(10,14,22,.72);z-index:10}
   .panel.show{display:flex}
+  @media (max-height:420px){ .card{padding:10px 14px} .card h2{font-size:19px;margin:2px 0 6px} .card p{margin:5px 0} }
   .card{touch-action:pan-y;background:#fffdf7;color:#1d2330;border-radius:16px;padding:16px 18px;max-width:460px;width:calc(100vw - 48px);max-height:calc(100vh - 32px);overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.4)}
   .card h2{margin:0 0 6px;font-size:19px}
   .card p{margin:6px 0;font-size:14px;line-height:1.4}
@@ -54,12 +55,10 @@
 
 <div class="panel show" id="intro"><div class="card">
   <h2>A monster with big feelings</h2>
-  <p>You're a giant monster in a tiny town, with a little scientist on your head. Three jobs today: <b>Demolition Day</b>, the <b>Cake Run</b> and the <b>Harbour Crane</b>.</p>
-  <p><b>Left thumb:</b> drag on the left to walk.<br>
-  <b>Big button:</b> <b>tap</b> to stomp · <b>hold</b>, drag to aim, release when the ring closes to <b>fling</b> · while holding, drag onto <b>🌬</b> and release on the pulse to <b>breathe</b>.</p>
-  <p class="small"><b>Tester run:</b> about 5 minutes for all three errands, then tell us what you thought (Feedback button, top right). Your monster's size and colour are its energy. Calm is quick and precise, hot is powerful but slippery. The town remembers what you break today, and your monster's habits show on it. Prototype for feel only: placeholder shapes, landscape works best.</p>
-  <p class="small"><label for="testerCode"><b>Tester code</b> (if someone gave you one):</label> <input id="testerCode" maxlength="12" autocomplete="off" style="width:7em;font-size:16px;padding:4px 6px;border-radius:8px;border:1px solid #ccc"></p>
-  <div class="btns"><button class="primary" id="startBtn">Start</button></div>
+  <p>You're a giant monster in a tiny town, with a little scientist on your head. Three jobs today.</p>
+  <p><b>Left thumb:</b> drag to walk. <b>⚡ button:</b> tap it, or hold it and drag. Tips pop up as you go, and <b>? Help</b> has the full controls.</p>
+  <p class="small">About 5 minutes. When you stop, tap <b>Feedback</b> and tell us what you thought.</p>
+  <div class="btns" style="align-items:center"><label class="small" for="testerCode" style="margin-right:auto"><b>Tester code</b> <input id="testerCode" maxlength="12" autocomplete="off" style="width:5.5em;font-size:16px;padding:4px 6px;border-radius:8px;border:1px solid #ccc"></label><button class="primary" id="startBtn">Start</button></div>
 </div></div>
 
 <div class="panel" id="end"><div class="card">
@@ -160,7 +159,7 @@ const SFX={stomp:()=>tone(90,0.35,'sine',0.35,-50), whoosh:()=>tone(500,0.3,'saw
 // ---------------- session log ----------------
 const LOG={attempts:0,events:[]}; let t0=performance.now();
 function ev(name,extra){ const e={t:+((performance.now()-t0)/1000).toFixed(1),e:name}; if(G&&G.errand) e.errand=G.errand.id; if(extra) Object.assign(e,extra); LOG.events.push(e); }
-function showLog(){ $('logText').value=JSON.stringify({prototype:'kaiju-surge-v5.7',ua:navigator.userAgent.slice(0,80),screen:W+'x'+H,settings:S,grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,best:G?G.best:null,...LOG},null,1); $('copyMsg').textContent=''; openPanel('logPanel'); }
+function showLog(){ $('logText').value=JSON.stringify({prototype:'kaiju-surge-v5.8',ua:navigator.userAgent.slice(0,80),screen:W+'x'+H,settings:S,grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,best:G?G.best:null,...LOG},null,1); $('copyMsg').textContent=''; openPanel('logPanel'); }
 $('info').onclick=showLog; $('closeLog').onclick=()=>closePanel('logPanel');
 $('copyLog').onclick=()=>{ const ta=$('logText'); try{ navigator.clipboard.writeText(ta.value).then(()=>$('copyMsg').textContent='Copied.',()=>{ta.select();$('copyMsg').textContent='Select all and copy manually.';}); }catch(e){ ta.select(); $('copyMsg').textContent='Select all and copy manually.'; } };
 
@@ -392,7 +391,7 @@ $('startBtn').onclick=()=>{ TESTER=($('testerCode').value||'').trim().slice(0,12
 // ---------------- first-time coaching for Demolition Day ----------------
 function demoCoach(){ const E=G.errand; if(!E||E.id!=='demo'||G.coach) return; const bus=G.D[0].P.find(p=>p.kind==='bus');
   if(!G.shown.c_walk) coach('walk','Drag your left thumb to walk to the yellow bus.',()=>({x:bus.x,y:bus.y-110}),()=>dist(G.m.x,G.m.y,bus.x,bus.y)<150||G.flagBus);
-  else if(!G.shown.c_stomp) coach('stomp','Tap ⚡ to stomp the bus out of the way.',()=>({x:bus.x,y:bus.y-110}),()=>G.flagBus);
+  else if(!G.shown.c_stomp) coach('stomp','Walk up to the yellow bus and tap ⚡ to stomp it out of the way.',()=>({x:bus.x,y:bus.y-110}),()=>G.flagBus);
   else if(!G.shown.c_aim) coach('aim','Hold ⚡, drag toward a striped building, and let go when the ring meets the circle.',()=>{ const t=G.D[0].B.filter(b=>!b.down&&b.kind!=='house').sort((a,b)=>dist(G.m.x,G.m.y,a.x,a.y)-dist(G.m.x,G.m.y,b.x,b.y))[0]; return t?{x:t.x+t.w/2,y:t.y-30}:null; },()=>G.errand&&G.errand.redirects>0); }
 // ---------------- update ----------------
 function collideMonster(m,r){
@@ -451,7 +450,7 @@ function update(dt){
     if(c.x>WORLD.w+80) c.x=-80; if(c.x<-80) c.x=WORLD.w+80;
     // taxi jam blocks traffic in the glass quarter until cleared
     c.honkCd-=wdt; const d=dist(c.x,c.y,m.x,m.y);
-    if(d<220&&c.honkCd<=0&&m.mode!=='rampage'&&!m.lock){ c.honkCd=2.2; addMeter(S.honk); SFX.honk(); float(c.x,c.y-30,'HONK','#ffe066'); { const md=moodOf(m); if(md==='cross'||md==='angry') setTimeout(()=>sayMood(moodOf(G.m)),260); }  }
+    if(d<220&&c.honkCd<=0&&m.mode!=='rampage'&&!m.lock&&(G.flagBus||G.t>25)){ c.honkCd=2.2; addMeter(S.honk); SFX.honk(); float(c.x,c.y-30,'HONK','#ffe066'); { const md=moodOf(m); if(md==='cross'||md==='angry') setTimeout(()=>sayMood(moodOf(G.m)),260); }  }
     if(d<bodyR(m.meter)+20&&E&&E.carrying&&!c.hit){ if(!S.easy&&(Math.hypot(m.vx,m.vy)>200||m.meter>=75)){ loseTier('car bump'); if(E.tierCd<2.5) E.tierCd=2.5; } const ka=Math.atan2(c.y-m.y,c.x-m.x); c.hit=true; c.vx=Math.cos(ka)*320; c.vy=Math.sin(ka)*320; } }
   // bee
   g.beeTimer-=wdt; if(!g.bee&&g.beeTimer<=0&&!m.lock){ g.bee={t:3.2,a:0}; float(m.x,m.y-90,'bzzz…','#fff3a0'); }
@@ -887,7 +886,7 @@ $('fbBtn').onclick=()=>openFb(G&&G.errand?'During: '+ERRANDS[G.errand.id].name:'
 $('fbFromEnd').onclick=()=>openFb('After: '+$('endTitle').textContent);
 $('fbClose').onclick=()=>closePanel('fbPanel');
 $('fbSend').onclick=async()=>{
-  const payload={v:'kaiju-surge-v5.7',host:HOST,tester:TESTER,at:new Date().toISOString(),context:fbContext,again:fbAgain,best:$('fbBest').value.slice(0,1000),confused:$('fbConf').value.slice(0,1000),other:$('fbElse').value.slice(0,1000),
+  const payload={v:'kaiju-surge-v5.8',host:HOST,tester:TESTER,at:new Date().toISOString(),context:fbContext,again:fbAgain,best:$('fbBest').value.slice(0,1000),confused:$('fbConf').value.slice(0,1000),other:$('fbElse').value.slice(0,1000),
     screen:W+'x'+H,touch:('ontouchstart' in window),best_stars:G?G.best:null,grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,settings:S,events:LOG.events.slice(-80)};
   if(!payload.again&&!payload.best&&!payload.confused&&!payload.other){ $('fbMsg').textContent='Pick an answer or type something first.'; return; }
   $('fbSend').disabled=true; $('fbMsg').textContent='Sending…';
@@ -899,7 +898,7 @@ $('fbSend').onclick=async()=>{
 };
 const SID=Date.now().toString(36)+Math.random().toString(36).slice(2,6); let fpsSum=0,fpsN=0;
 function sessionSummary(){ const ev2=LOG.events, cnt=n=>ev2.filter(e=>e.e===n).length;
-  return {v:'kaiju-surge-v5.7',host:HOST,tester:TESTER,started:new Date(performance.timeOrigin||Date.now()).toISOString(),screen:W+'x'+H,touch:('ontouchstart' in window),settings:S,lowQuality:lowQ,fps:fpsN?Math.round(fpsSum/fpsN):null,
+  return {v:'kaiju-surge-v5.8',host:HOST,tester:TESTER,started:new Date(performance.timeOrigin||Date.now()).toISOString(),screen:W+'x'+H,touch:('ontouchstart' in window),settings:S,lowQuality:lowQ,fps:fpsN?Math.round(fpsSum/fpsN):null,
     errands:ev2.filter(e=>e.e==='errand_complete').map(e=>({id:e.errand,stars:e.stars,time:e.time,houses:e.houses,glass:e.glass,tiers:e.tiers,mistakes:e.mistakes,perfects:e.perfects})),
     counts:{blasts:cnt('blast'),redirects:cnt('redirect'),perfects:ev2.filter(e=>e.e==='redirect'&&e.perfect).length,breathes:cnt('breathe'),rampages:cnt('rampage'),tantrums:cnt('tantrum'),overthinks:cnt('overthink'),agains:cnt('again'),feedback:cnt('feedback_sent'),help:cnt('help_open')}, firstRedirectS:(()=>{ const st=ev2.find(e=>e.e==='errand_start'), r=ev2.find(e=>e.e==='redirect'); return st&&r?+(r.t-st.t).toFixed(1):null; })(), replays:ev2.filter(e=>e.e==='errand_start'&&e.replay).length, errandsStarted:ev2.filter(e=>e.e==='errand_start').length, releaseErrMs:ev2.filter(e=>e.e==='redirect'&&typeof e.err==='number').slice(-60).map(e=>[e.err,e.cyc,e.band==='hot'?2:(e.band==='zone'?1:0)]),
     coach:ev2.filter(e=>e.e==='coach_done').map(e=>({id:e.id,secs:e.secs})),grooves:G?G.grooves:null,mood:G?Math.round(G.mood):null,minutes:+((performance.now()-t0)/60000).toFixed(1),last:ev2.length?ev2[ev2.length-1].e:null}; }
